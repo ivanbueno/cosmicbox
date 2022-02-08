@@ -10,10 +10,6 @@
 #define TIME 4
 #define POWER 5
 
-#define TRIANGLE 0
-#define CIRCLE 1
-#define GAUSS 2
-
 int ledPins[] = {3, 5, 6, 9, 10, 11};
 
 ButtonDebounce button14(14, 250);
@@ -26,10 +22,6 @@ ButtonDebounce button18(18, 250);
 float inhale = 0, inhale_retention = 0, exhale = 0, exhale_retention = 0;
 int stones[2];
 VirtualDelay delayInhale, delayInhaleHold, delayExhale, delayExhaleHold, delayBlink;
-
-float smoothness = 300; //larger=slower change in brightness 
-float gamma = 0.14; // affects the width of peak (more or less darkness)
-float beta = 0.5; // shifts the gaussian to be symmetric
 
 void setup() {
   Serial.begin(9600);
@@ -143,63 +135,9 @@ void checkInput() {
   }
 }
 
-void sinePulse(int stones[], float inhale_speed, float inhale_retention, float exhale_speed, float exhale_retention) {
-  float in, out;
-
-  // rising
-  out = sinePulseRise(stones, inhale_speed);
-
-  // hold
-  blinkLEDS(stones, out);
-  delayInhaleHold.start(inhale_retention);
-  while (!delayInhaleHold.elapsed()) {};
-  blinkLEDS(stones, out);
-
-  // falling
-  out = sinePulseFall(stones, exhale_speed);
-
-  // hold
-  delayExhaleHold.start(exhale_retention);
-  while (!delayExhaleHold.elapsed()) {};
-}
-
-int sinePulseRise(int stones[], float inhale_speed) {
-  float in, out;
-  
-  for (in = 4.712; in < 7.854; in = in + (inhale_speed * 0.0005)) {
-      delayInhale.start(1); 
-      while (!delayInhale.elapsed()) {};
-      
-      out = sin(in) * 127.5 + 127.5;
-      turnLEDS(stones, out);
-  }
-
-  return out;
-}
-
-
-int sinePulseFall(int stones[], float exhale_speed) {
-  float in, out;
-
-  for (in = 1.570; in < 4.712; in = in + (exhale_speed * 0.0005)) {
-      delayExhale.start(1); 
-      while (!delayExhale.elapsed()) {};
-      
-      out = sin(in) * 127.5 + 127.5;
-      turnLEDS(stones, out);
-  }
-}
-
 void turnLEDS(int stones[], int out) {
   for (int i = 0; i < sizeof(stones); i++) {
     analogWrite(ledPins[stones[i]], out);
-  }
-}
-
-
-void turnLEDSOn() {
-  for (int i = 0; i < sizeof(ledPins); i++) {
-    analogWrite(ledPins[i], 255);
   }
 }
 
@@ -212,14 +150,6 @@ void turnLEDSOff() {
   inhale_retention = 0;
   exhale = 0;
   exhale_retention = 0;
-}
-
-void blinkLEDS(int stones[], int out) {
-  turnLEDS(stones, out-100);
-  delay(100);
-  turnLEDS(stones, out-150);
-  delay(100);
-  turnLEDS(stones, out);
 }
 
 void randomEffect() {
@@ -300,6 +230,7 @@ void oneAfterAnotherLoop() {
     delay(delayTime);
   }
 }
+
 void oneOnAtATime() {
   int index;
   int delayTime = 100; // milliseconds to pause between LEDs
@@ -360,32 +291,4 @@ void randomLED() {
   digitalWrite(ledPins[index], HIGH);  // turn LED on
   delay(delayTime);                    // pause to slow down
   digitalWrite(ledPins[index], LOW);   // turn LED off
-}
-
-void wavePulse(int stones[], float smooth, int waveType) {
-  for (int i = 0; i < smooth; i++){
-    float pwm_val = waveFunction(GAUSS, i, smooth);
-    turnLEDS(stones, pwm_val);    
-    delay(1);
-  }
-}
-
-float waveFunction(int waveType, int k, float smooth) {
-  float pwm = 0;
-  switch(waveType) {
-    
-    case TRIANGLE:
-      pwm = 255.0*(1.0 -  abs((2.0*(k/smooth))-1.0));
-      break;
-
-    case CIRCLE:
-      pwm = 255.0*sqrt(1.0 -  pow(abs((2.0*(k/smooth))-1.0),2.0));
-      break;
-
-    default:
-      pwm = 255.0*(exp(-(pow(((k/smooth)-beta)/gamma,2.0))/2.0));
-      break;
-  }
-
-  return pwm;
 }
