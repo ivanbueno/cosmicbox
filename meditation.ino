@@ -10,7 +10,9 @@
 #define TIME 4
 #define POWER 5
 
+#define NUM_OF_LEDS 6
 int ledPins[] = {3, 5, 6, 9, 10, 11};
+int stones[] = {0, 1, 2, 3, 4, 5};
 
 ButtonDebounce button14(14, 250);
 ButtonDebounce button15(15, 250);
@@ -20,7 +22,6 @@ ButtonDebounce button18(18, 250);
 
 
 float inhale = 0, inhale_retention = 0, exhale = 0, exhale_retention = 0;
-int stones[2];
 VirtualDelay delayInhale, delayInhaleHold, delayExhale, delayExhaleHold, delayBlink;
 
 void setup() {
@@ -39,11 +40,11 @@ void loop() {
   checkInput();
   
   if (inhale) {
-    sinePulseNonBlocking(stones, inhale, inhale_retention, exhale, exhale_retention);
+    sinePulseNonBlocking(inhale, inhale_retention, exhale, exhale_retention);
   }
 }
 
-void sinePulseNonBlocking(int stones[], float inhale_speed, float inhale_retention, float exhale_speed, float exhale_retention) {
+void sinePulseNonBlocking(float inhale_speed, float inhale_retention, float exhale_speed, float exhale_retention) {
   static float in = 4.72;
   float out;
 
@@ -62,18 +63,18 @@ void sinePulseNonBlocking(int stones[], float inhale_speed, float inhale_retenti
       in = 4.72;
     }
     else {
-      in = 4.55;
+      in = 4.10;
     }
   }
 
   // top
   if (in > 7.85 && in < 7.86) {
     delayInhaleHold.start(inhale_retention);
-    in = delayInhaleHold.elapsed() ? 7.86 : 7.0;
+    in = delayInhaleHold.elapsed() ? 7.86 : 6.8;
   }
   
   out = sin(in) * 127.5 + 127.5;
-  turnLEDS(stones, out);
+  turnLEDS(out);
 }
 
 void checkInput() {
@@ -86,38 +87,34 @@ void checkInput() {
   if (button14.state() == LOW) {
     randomEffect();
     // 4-4-4  Triangle Breathing, reduce metabolic rate
-    stones[0] = random(0, 5);
-    stones[1] = random(0, 5);
-    inhale = 2.5;
+    randomizeStones();
+    inhale = 1.5;
     inhale_retention = 3500;
-    exhale = 2.5;
+    exhale = 1.5;
     exhale_retention = 3500;
   }
   else if (button15.state() == LOW) {
     randomEffect();
     // 1-1-1-1  Square Breathing, preserve energy
-    stones[0] = random(0, 5);
-    stones[1] = random(0, 5);
-    inhale = 4;
+    randomizeStones();
+    inhale = 3;
     inhale_retention = 1000;
-    exhale = 4;
+    exhale = 3;
     exhale_retention = 1000;
   }
   else if (button16.state() == LOW) {
     randomEffect();
     // 1-2  Paced Breathing, stress reduction
-    stones[0] = random(0, 5);
-    stones[1] = random(0, 5);
-    inhale = 4;
+    randomizeStones();
+    inhale = 3;
     inhale_retention = 1000;
-    exhale = 2.5;
+    exhale = 1.5;
     exhale_retention = 500;
   }
   else if (button17.state() == LOW) {
     randomEffect();
     // 4-7-8 Sleeping. extreme relaxation
-    stones[0] = random(0, 5);
-    stones[1] = random(0, 5);
+    randomizeStones();
     inhale = 2.5;
     inhale_retention = 6500;
     exhale = 1;
@@ -126,23 +123,23 @@ void checkInput() {
   else if (button18.state() == LOW) {
     randomEffect();
     // 1-2-1 Awake. Energizing
-    stones[0] = random(0, 5);
-    stones[1] = random(0, 5);
+    randomizeStones();
     inhale = 6;
     inhale_retention = 200;
     exhale = 6;
     exhale_retention = 100;
   }
+  
 }
 
-void turnLEDS(int stones[], int out) {
-  for (int i = 0; i < sizeof(stones); i++) {
+void turnLEDS(int out) {
+  for (int i = 0; i < NUM_OF_LEDS; i++) {
     analogWrite(ledPins[stones[i]], out);
   }
 }
 
 void turnLEDSOff() {
-  for (int i = 0; i < sizeof(ledPins); i++) {
+  for (int i = 0; i < NUM_OF_LEDS; i++) {
     analogWrite(ledPins[i], 0);
   }
   
@@ -152,12 +149,19 @@ void turnLEDSOff() {
   exhale_retention = 0;
 }
 
+void randomizeStones() {
+  stones[0] = random(0, 6);
+  stones[1] = random(0, 6);
+  stones[2] = random(0, 6);
+  stones[3] = random(0, 6);
+  stones[4] = random(0, 6);
+  stones[5] = random(0, 6);
+}
+
 void randomEffect() {
   turnLEDSOff();
   
   int k = random(0, 5);
-
-  Serial << "\n k: " << k;
 
   switch (k) {
     case 0:
