@@ -14,6 +14,9 @@
 int ledPins[] = {3, 5, 6, 9, 10, 11};
 int stones[] = {0, 1, 2, 3, 4, 5};
 
+int lightPin = 5;
+int wasLightOff = 0;
+
 ButtonDebounce button14(14, 250);
 ButtonDebounce button15(15, 250);
 ButtonDebounce button16(16, 250);
@@ -37,10 +40,15 @@ void setup() {
 }
 
 void loop() {
-  checkInput();
-  
-  if (inhale) {
-    sinePulseNonBlocking(inhale, inhale_retention, exhale, exhale_retention);
+  if (isThereLight()) {
+    checkInput();
+    
+    if (inhale) {
+      sinePulseNonBlocking(inhale, inhale_retention, exhale, exhale_retention);
+    }
+  }
+  else {
+    turnLEDSOff();
   }
 }
 
@@ -70,11 +78,27 @@ void sinePulseNonBlocking(float inhale_speed, float inhale_retention, float exha
   // top
   if (in > 7.85 && in < 7.86) {
     delayInhaleHold.start(inhale_retention);
-    in = delayInhaleHold.elapsed() ? 7.86 : 6.8;
+    in = delayInhaleHold.elapsed() ? 7.86 : 6.0;
   }
   
   out = sin(in) * 127.5 + 127.5;
   turnLEDS(out);
+}
+
+bool isThereLight() {
+  int light = analogRead(lightPin) > 50;
+
+  if (light && wasLightOff) {
+    pingPong();
+    wasLightOff = 0;
+  }
+
+  if (!light) {
+    wasLightOff = 1;
+  }
+  
+
+  return light;
 }
 
 void checkInput() {
