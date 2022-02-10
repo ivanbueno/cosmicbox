@@ -16,13 +16,7 @@ int stones[] = {0, 1, 2, 3, 4, 5};
 
 int lightPin = 5;
 int wasLightOff = 0;
-
-ButtonDebounce button14(14, 250);
-ButtonDebounce button15(15, 250);
-ButtonDebounce button16(16, 250);
-ButtonDebounce button17(17, 250);
-ButtonDebounce button18(18, 250);
-
+int isBreathing = 0;
 
 float inhale = 0, inhale_retention = 0, exhale = 0, exhale_retention = 0;
 VirtualDelay delayInhale, delayInhaleHold, delayExhale, delayExhaleHold, delayBlink;
@@ -41,13 +35,17 @@ void setup() {
 
 void loop() {
   if (isThereLight()) {
-    checkInput();
+    if (!isBreathing) {
+      setRandomBreathingPattern();
+      isBreathing = 1;
+    }
     
     if (inhale) {
       sinePulseNonBlocking(inhale, inhale_retention, exhale, exhale_retention);
     }
   }
   else {
+    isBreathing = 0;
     turnLEDSOff();
   }
 }
@@ -97,63 +95,58 @@ bool isThereLight() {
     wasLightOff = 1;
   }
   
-
   return light;
 }
 
-void checkInput() {
-  button14.update();
-  button15.update();
-  button16.update();
-  button17.update();
-  button18.update();
+void setRandomBreathingPattern() {
 
-  if (button14.state() == LOW) {
-    randomEffect();
-    // 4-4-4  Triangle Breathing, reduce metabolic rate
-    randomizeStones();
-    inhale = 1.5;
-    inhale_retention = 3500;
-    exhale = 1.5;
-    exhale_retention = 3500;
+  switch (random(0, 5)) {
+    case 0:
+      randomEffect();
+      // 4-4-4  Triangle Breathing, reduce metabolic rate
+      randomizeStones();
+      inhale = 1.5;
+      inhale_retention = 3500;
+      exhale = 1.5;
+      exhale_retention = 3500;
+      break;
+    case 1:
+      randomEffect();
+      // 1-1-1-1  Square Breathing, preserve energy
+      randomizeStones();
+      inhale = 3;
+      inhale_retention = 1000;
+      exhale = 3;
+      exhale_retention = 1000;
+      break;
+    case 2:
+      randomEffect();
+      // 1-2  Paced Breathing, stress reduction
+      randomizeStones();
+      inhale = 3;
+      inhale_retention = 1000;
+      exhale = 1.5;
+      exhale_retention = 500;
+      break;
+    case 3:
+      randomEffect();
+      // 4-7-8 Sleeping. extreme relaxation
+      randomizeStones();
+      inhale = 2.5;
+      inhale_retention = 6500;
+      exhale = 1;
+      exhale_retention = 7500;
+      break;
+    case 4:
+      randomEffect();
+      // 1-2-1 Awake. Energizing
+      randomizeStones();
+      inhale = 6;
+      inhale_retention = 200;
+      exhale = 6;
+      exhale_retention = 100;
+      break;
   }
-  else if (button15.state() == LOW) {
-    randomEffect();
-    // 1-1-1-1  Square Breathing, preserve energy
-    randomizeStones();
-    inhale = 3;
-    inhale_retention = 1000;
-    exhale = 3;
-    exhale_retention = 1000;
-  }
-  else if (button16.state() == LOW) {
-    randomEffect();
-    // 1-2  Paced Breathing, stress reduction
-    randomizeStones();
-    inhale = 3;
-    inhale_retention = 1000;
-    exhale = 1.5;
-    exhale_retention = 500;
-  }
-  else if (button17.state() == LOW) {
-    randomEffect();
-    // 4-7-8 Sleeping. extreme relaxation
-    randomizeStones();
-    inhale = 2.5;
-    inhale_retention = 6500;
-    exhale = 1;
-    exhale_retention = 7500;
-  }
-  else if (button18.state() == LOW) {
-    randomEffect();
-    // 1-2-1 Awake. Energizing
-    randomizeStones();
-    inhale = 6;
-    inhale_retention = 200;
-    exhale = 6;
-    exhale_retention = 100;
-  }
-  
 }
 
 void turnLEDS(int out) {
